@@ -29,3 +29,5 @@ id,firstName,lastName
 28,Audrey,Barbier
 29,Gregory,Brunet
 30,Vanessa,Leclercq
+31,RETRY,Example
+32,,MissingLastName

@@ -1,12 +1,15 @@
 package com.example.batch.config;
 
+import com.example.batch.exception.InvalidPersonException;
+import com.example.batch.exception.TransientPersonException;
+import com.example.batch.listener.BatchSkipListener;
 import com.example.batch.listener.JobListener;
 import com.example.batch.listener.ProcessorListener;
 import com.example.batch.listener.ReaderListener;
 import com.example.batch.listener.StepListener;
 import com.example.batch.listener.WriterListener;
 import com.example.batch.model.Person;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
+import com.example.batch.processor.PersonItemProcessor;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
@@ -20,6 +23,7 @@ import org.springframework.batch.infrastructure.item.database.builder.JdbcBatchI
 import org.springframework.batch.infrastructure.item.file.FlatFileItemReader;
 import org.springframework.batch.infrastructure.item.file.builder.FlatFileItemReaderBuilder;
 import org.springframework.batch.infrastructure.item.file.mapping.BeanWrapperFieldSetMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
@@ -28,14 +32,19 @@ import org.springframework.transaction.PlatformTransactionManager;
 import javax.sql.DataSource;
 
 @Configuration
-@EnableBatchProcessing
 public class BatchConfig {
+
+    @Value("${app.batch.input-data-path:data.csv}")
+    private String inputDataPath;
+
+    @Value("${app.batch.chunk-size:10}")
+    private int chunkSize;
 
     @Bean
     public FlatFileItemReader<Person> reader() {
         return new FlatFileItemReaderBuilder<Person>()
                 .name("personReader")
-                .resource(new ClassPathResource("data.csv"))
+                .resource(new ClassPathResource(inputDataPath))
                 .delimited()
                 .names("id", "firstName", "lastName")
                 .linesToSkip(1)
@@ -46,11 +55,8 @@ public class BatchConfig {
     }
 
     @Bean
-    public ItemProcessor<Person, Person> processor() {
-        return person -> {
-            person.setFirstName(person.getFirstName().toUpperCase());
-            return person;
-        };
+    public ItemProcessor<Person, Person> processor(PersonItemProcessor processor) {
+        return processor;
     }
 
     @Bean
@@ -71,14 +77,21 @@ public class BatchConfig {
                      StepListener stepListener,
                      ReaderListener readerListener,
                      ProcessorListener processorListener,
-                     WriterListener writerListener) {
+                     WriterListener writerListener,
+                     BatchSkipListener batchSkipListener) {
 
         return new StepBuilder("importPersonStep", jobRepository)
-                .<Person, Person>chunk(10)
+                .<Person, Person>chunk(chunkSize)
                 .transactionManager(transactionManager)
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)
+                .faultTolerant()
+                .retry(TransientPersonException.class)
+                .retryLimit(3)
+                .skip(InvalidPersonException.class)
+                .skipLimit(5)
+                .listener(batchSkipListener)
                 .listener(stepListener)
                 .listener(readerListener)
                 .listener(processorListener)

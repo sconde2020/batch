@@ -12,29 +12,27 @@ import java.time.LocalDateTime;
 @Component
 public class JobListener implements JobExecutionListener {
 
-	private static final Logger log = LoggerFactory.getLogger(JobListener.class);
+    private static final Logger log = LoggerFactory.getLogger(JobListener.class);
 
-	@Override
-	public void beforeJob(JobExecution jobExecution) {
-		log.info("Job '{}' started (id={}) at {}",
-				jobExecution.getJobInstance().getJobName(),
-				jobExecution.getId(),
-				jobExecution.getStartTime());
-	}
+    @Override
+    public void beforeJob(JobExecution jobExecution) {
+        log.info("Job '{}' started (id={}) at {}",
+                jobExecution.getJobInstance().getJobName(),
+                jobExecution.getId(),
+                jobExecution.getStartTime());
+    }
 
-	@Override
-	public void afterJob(JobExecution jobExecution) {
-		LocalDateTime start = jobExecution.getStartTime();
-		LocalDateTime end = jobExecution.getEndTime();
-		Long durationMs = (start != null && end != null) ? Duration.between(start, end).toMillis() : null;
+    @Override
+    public void afterJob(JobExecution jobExecution) {
+        LocalDateTime start = jobExecution.getStartTime();
+        LocalDateTime end = jobExecution.getEndTime();
+        Long durationMs = (start != null && end != null) ? Duration.between(start, end).toMillis() : null;
 
-		log.info("Job '{}' finished (id={}) with status={} exitCode={} durationMs={}",
-				jobExecution.getJobInstance().getJobName(),
-				jobExecution.getId(),
-				jobExecution.getStatus(),
-				jobExecution.getExitStatus().getExitCode(),
-				durationMs);
-	}
-
-
+        log.info("Job '{}' finished (id={}) with status={} exitCode={} durationMs={}",
+                jobExecution.getJobInstance().getJobName(),
+                jobExecution.getId(),
+                jobExecution.getStatus(),
+                jobExecution.getExitStatus().getExitCode(),
+                durationMs);
+    }
 }
