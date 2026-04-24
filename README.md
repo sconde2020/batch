@@ -54,22 +54,29 @@ Spring Batch traite les données par **chunks** :
 
 ## 🏗️ Architecture du projet
 
-Structure typique :
+Structure réelle du projet :
 
 ```
 src/main/java/
-├── config/        → Configuration Spring Batch
-├── job/           → Définition des jobs
-├── step/          → Étapes du traitement
-├── reader/        → Lecture des données
-├── processor/     → Transformation
-├── writer/        → Écriture des données
+├── config/        → Configuration Spring Batch (Job, Step, beans)
+├── listener/      → Listeners (JobExecutionListener, StepExecutionListener…)
+├── processor/     → Transformation des données (ItemProcessor)
+├── model/         → Modèles / objets métier (si présents)
 ```
 
 ```
 src/main/resources/
 ├── application.properties
 ```
+
+### ⚠️ Note importante
+
+Dans ce projet de démonstration :
+
+* les **ItemReader** et **ItemWriter** ne sont pas isolés dans des packages dédiés
+* ils sont généralement définis directement dans la **configuration (config/)** ou au niveau des **steps**
+
+Ce choix simplifie la structure pour une démo, mais dans un projet réel, on les séparerait souvent pour plus de lisibilité.
 
 ---
 
